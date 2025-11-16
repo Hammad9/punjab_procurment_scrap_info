@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/*.js": {
+      "excludeFiles": "**/node_modules/puppeteer/.local-chromium/**"
+    }
+  }
+}
