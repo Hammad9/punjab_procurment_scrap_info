@@ -1,12 +1,12 @@
 {
-  "name": "punjab-tender-scraper",
+  "name": "punjab_procurment_scraper",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "vercel-build": "echo 'Vercel build complete'"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "puppeteer": "^22.7.1"
+    "@sparticuz/chromium": "^115.0.0",
+    "puppeteer-core": "^21.7.0"
   }
 }

@@ -1,23 +1,20 @@
-import express from "express";
-import chromium from "chrome-aws-lambda";
+import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
-const app = express();
-
-app.get("/", async (req, res) => {
-  let browser = null;
+export default async function handler(req, res) {
+  let browser;
 
   try {
     const executablePath = await chromium.executablePath;
 
     browser = await puppeteer.launch({
-      executablePath: executablePath,
+      executablePath,
       args: chromium.args,
       headless: chromium.headless,
-      defaultViewport: chromium.defaultViewport
     });
 
     const page = await browser.newPage();
+
     await page.goto("https://eproc.punjab.gov.pk/ActiveTenders.aspx", {
       waitUntil: "networkidle2",
       timeout: 0
@@ -25,12 +22,15 @@ app.get("/", async (req, res) => {
 
     await page.waitForSelector(".rgRow");
 
-    const allData = [];
+    let allData = [];
+    let currentPage = 1;
 
-    // Loop through 10 pages
-    for (let i = 1; i <= 10; i++) {
-      const pageData = await page.evaluate(() => {
+    while (true) {
+      console.log(`Scraping page ${currentPage}`);
+
+      const data = await page.evaluate(() => {
         const rows = [...document.querySelectorAll(".rgRow")];
+
         return rows.map(row => {
           const tds = [...row.querySelectorAll("td")];
           return {
@@ -46,27 +46,32 @@ app.get("/", async (req, res) => {
         });
       });
 
-      allData.push(...pageData);
+      allData.push(...data);
 
+      // NEXT button
       const nextBtn = await page.$(".rgPageNext");
-      if (!nextBtn) break;
+
+      if (!nextBtn) break; // no more pages
 
       await nextBtn.click();
       await page.waitForTimeout(3000);
       await page.waitForSelector(".rgRow");
+
+      currentPage++;
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       count: allData.length,
       data: allData
     });
 
-  } catch (error) {
-    res.json({ success: false, error: error.message });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   } finally {
     if (browser) await browser.close();
   }
-});
-
-app.listen(3000, () => console.log("Scraper API running on port 3000"));
+}
