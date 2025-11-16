@@ -1,7 +1,8 @@
 {
+  "version": 2,
   "functions": {
-    "api/*.js": {
-      "excludeFiles": "**/node_modules/puppeteer/.local-chromium/**"
+    "api/scrape.js": {
+      "runtime": "nodejs20.x"
     }
   }
 }
